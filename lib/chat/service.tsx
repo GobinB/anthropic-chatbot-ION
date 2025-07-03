@@ -13,7 +13,7 @@ import {
 import { createStreams, closeStreams, appendMessageToAIState } from './utils'
 import { nanoid } from '@/lib/utils'
 
-const model = anthropic('claude-3-haiku-20240307')
+const model = anthropic('claude-sonnet-4-20250514')
 
 const processAIState = async (
   aiState: MutableAIState<AIState>,
