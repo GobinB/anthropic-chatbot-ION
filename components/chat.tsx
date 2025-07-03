@@ -37,10 +37,10 @@ export function Chat({ id, className, session }: ChatProps) {
     setCsvData(data)
     setCsvAnalysis(summary)
     setCsvFileName('uploaded-data.csv')
-    
+
     // Store CSV analysis in AI state for persistence
     await setCSVAnalysis(summary)
-    
+
     // Show a welcome message with the data analysis
     toast.success(`CSV loaded: ${data.length} devices analyzed`)
   }, [setCSVAnalysis])
@@ -79,7 +79,7 @@ export function Chat({ id, className, session }: ChatProps) {
           <div className="space-y-6">
             <EmptyScreen />
             <div className="mx-auto max-w-2xl px-4">
-              <CSVUploader 
+              <CSVUploader
                 onDataLoad={handleDataLoad}
                 currentFileName={csvFileName}
                 deviceCount={csvData.length}

@@ -60,7 +60,7 @@ export function ChatPanel({
 
       <div className="mx-auto sm:max-w-2xl sm:px-4">
         <div className="mb-4 grid sm:grid-cols-2 gap-2 sm:gap-4 px-4 sm:px-0">
-          {messages.length === 0 &&
+          {messages.length === 0 && csvAnalysis &&
             exampleMessages.map((example, index) => (
               <div
                 key={example.heading}

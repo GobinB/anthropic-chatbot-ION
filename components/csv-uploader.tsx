@@ -50,7 +50,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
     if (lines.length === 0) throw new Error('CSV file is empty')
 
     const headers = lines[0].split(',').map(h => h.trim())
-    
+
     // Validate required columns
     const missingColumns = requiredColumns.filter(col => !headers.includes(col))
     if (missingColumns.length > 0) {
@@ -106,7 +106,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
     // Count by device type
     const devicesByType: Record<string, number> = {}
     const offlineByType: Record<string, number> = {}
-    
+
     currentDevices.forEach(device => {
       devicesByType[device.device_type] = (devicesByType[device.device_type] || 0) + 1
       if (device.status.includes('delayed')) {
@@ -119,7 +119,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
     const offlineGateways = offlineDevices.filter(d => d.device_type === 'gateway')
     const offlineRouters = offlineDevices.filter(d => d.device_type === 'router')
     const offlineCoordinators = offlineDevices.filter(d => d.device_type === 'coordinator')
-    
+
     // Also count routers acting as coordinators (status = "coordinator delayed")
     const routersActingAsCoordinators = offlineDevices.filter(d => d.device_type === 'router' && d.status === 'coordinator delayed')
 
@@ -141,7 +141,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
     summary += `Total Devices: ${totalDevices}\n`
     summary += `Online: ${onlineDevices}\n`
     summary += `Offline: ${offlineDevices.length}\n\n`
-    
+
     summary += `DEVICES BY TYPE:\n`
     Object.entries(devicesByType).forEach(([type, count]) => {
       const offline = offlineByType[type] || 0
@@ -159,21 +159,21 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
 
     // Detailed device listings with actual serial numbers
     summary += `\nOFFLINE DEVICES BY TYPE:\n`
-    
+
     if (offlineGateways.length > 0) {
       summary += `\nOFFLINE GATEWAYS (CRITICAL - affects multiple devices):\n`
       offlineGateways.slice(0, 10).forEach(gateway => {
         summary += `- ${gateway.meter_serial_number} at ${gateway.property_name} (${gateway.location || gateway.attached_to})\n`
       })
     }
-    
+
     if (routersActingAsCoordinators.length > 0) {
       summary += `\nROUTERS ACTING AS COORDINATORS (CRITICAL - mesh network control):\n`
       routersActingAsCoordinators.slice(0, 10).forEach(router => {
         summary += `- ${router.meter_serial_number} at ${router.property_name} (${router.location || router.attached_to}) - STATUS: ${router.status}\n`
       })
     }
-    
+
     const standardOfflineRouters = offlineRouters.filter(r => r.status !== 'coordinator delayed')
     if (standardOfflineRouters.length > 0) {
       summary += `\nOFFLINE ROUTERS (HIGH PRIORITY - affects connected meters):\n`
@@ -181,31 +181,28 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
         summary += `- ${router.meter_serial_number} at ${router.property_name} (${router.location || router.attached_to}) - STATUS: ${router.status}\n`
       })
     }
-    
+
     if (offlineCoordinators.length > 0) {
       summary += `\nOFFLINE COORDINATORS (affects local clusters):\n`
       offlineCoordinators.slice(0, 10).forEach(coord => {
         summary += `- ${coord.meter_serial_number} at ${coord.property_name} (${coord.location || coord.attached_to})\n`
       })
     }
-    
+
     const offlineMeters = offlineDevices.filter(d => d.device_type === 'meter')
     if (offlineMeters.length > 0) {
-      summary += `\nOFFLINE METERS (sample - ${Math.min(offlineMeters.length, 15)} of ${offlineMeters.length}):\n`
-      offlineMeters.slice(0, 15).forEach(meter => {
+      summary += `\nOFFLINE METERS (${offlineMeters.length} total):\n`
+      offlineMeters.forEach(meter => {
         summary += `- ${meter.meter_serial_number} at ${meter.property_name} (${meter.attached_to})\n`
       })
-      if (offlineMeters.length > 15) {
-        summary += `... and ${offlineMeters.length - 15} more offline meters\n`
-      }
     }
 
     // Hierarchy impact analysis with specific devices
     if (offlineGateways.length > 0) {
       summary += `\nHIERARCHY IMPACT ANALYSIS:\n`
       offlineGateways.forEach(gateway => {
-        const affectedDevices = currentDevices.filter(d => 
-          d.property_name === gateway.property_name && 
+        const affectedDevices = currentDevices.filter(d =>
+          d.property_name === gateway.property_name &&
           d.meter_serial_number !== gateway.meter_serial_number &&
           d.status === 'meter delayed'
         )
@@ -247,7 +244,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
       const text = await file.text()
       const devices = parseCSV(text)
       const summary = analyzeDevices(devices)
-      
+
       onDataLoad(devices, summary)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process CSV file')
@@ -276,7 +273,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault()
     setIsDragging(false)
-    
+
     const file = event.dataTransfer.files[0]
     if (file && file.type === 'text/csv') {
       processFile(file)
@@ -308,7 +305,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
               Drag and drop your CSV file here, or click to browse
             </p>
           </div>
-          
+
           <Button
             variant="outline"
             disabled={isProcessing}
@@ -316,7 +313,7 @@ export function CSVUploader({ onDataLoad, currentFileName, deviceCount }: CSVUpl
           >
             {isProcessing ? 'Processing...' : 'Select CSV File'}
           </Button>
-          
+
           <input
             id="csv-upload"
             type="file"

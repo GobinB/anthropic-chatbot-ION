@@ -136,7 +136,7 @@ export async function setCSVAnalysis(csvAnalysis: string) {
   'use server'
 
   const aiState = getMutableAIState<AIProvider>()
-  
+
   aiState.update({
     ...aiState.get(),
     csvAnalysis
