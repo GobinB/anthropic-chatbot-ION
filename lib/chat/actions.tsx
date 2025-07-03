@@ -143,6 +143,57 @@ export async function setCSVAnalysis(csvAnalysis: string) {
   })
 }
 
+export async function showDeviceCards(devices: import('@/components/csv-uploader').DeviceData[], title?: string) {
+  'use server'
+
+  try {
+    // Validate input
+    if (!Array.isArray(devices) || devices.length === 0) {
+      const ui = createStreamableUI(
+        <div className="text-center py-8">
+          <div className="text-gray-500">No devices to display</div>
+        </div>
+      )
+      return {
+        id: nanoid(),
+        display: ui.value
+      }
+    }
+
+    const { DeviceList } = await import('@/components/devices')
+    
+    const ui = createStreamableUI(
+      <div className="space-y-4">
+        <DeviceList
+          devices={devices}
+          title={title || 'Device Status'}
+          maxDevices={12}
+          showFilters={true}
+          onTroubleshoot={(deviceId) => {
+            // Troubleshooting will be handled by the chat interface
+          }}
+        />
+      </div>
+    )
+
+    return {
+      id: nanoid(),
+      display: ui.value
+    }
+  } catch (error) {
+    console.error('Error rendering device cards:', error)
+    const ui = createStreamableUI(
+      <div className="text-center py-8">
+        <div className="text-red-500">Error displaying device cards</div>
+      </div>
+    )
+    return {
+      id: nanoid(),
+      display: ui.value
+    }
+  }
+}
+
 export async function validateCode() {
   'use server'
 

@@ -104,6 +104,32 @@ When providing your initial response or when asked about device status, always i
 4. Specific device serial numbers when recommending actions
 5. Explanation of WHY you picked specific devices for troubleshooting
 
+DEVICE CARD DISPLAY:
+When users ask to see specific devices or need visual device information, you can display device cards using this format:
+
+\`\`\`device-card
+{
+  "meter_serial_number": "[use actual serial from uploaded data]",
+  "device_type": "[use actual device type from data]",
+  "attached_to": "[use actual attached_to value from data]",
+  "status": "[use actual status from data]",
+  "last_creation_time": "[use actual timestamp from data]",
+  "unit_details": "[use actual unit_details from data]",
+  "location": "[use actual location from data]",
+  "property_name": "[use actual property_name from data]"
+}
+\`\`\`
+
+- Use device cards when users ask: "Which devices should I fix first?", "Show me the critical devices", "What routers are offline?"
+- Always use ACTUAL data from the uploaded CSV - never make up serial numbers
+- Show 1-3 most important devices as cards, then provide text summary for others
+- Each card will automatically display: serial number, unit details, delay time, device type, attached_to, location
+
+RESPONSE FORMAT:
+- Start with a brief explanation of the situation
+- Show 1-3 device cards for the most critical devices
+- Follow with additional recommendations in text
+
 The date today is ${format(new Date(), 'd LLLL, yyyy')}.`
 
   // Add CSV analysis if provided

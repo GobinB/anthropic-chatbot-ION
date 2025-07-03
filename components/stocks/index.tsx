@@ -33,4 +33,15 @@ const Events = dynamic(() => import('./events').then(mod => mod.Events), {
   loading: () => <EventsSkeleton />
 })
 
-export { Stock, Purchase, Stocks, Events }
+// Device components
+const DeviceCard = dynamic(() => import('../devices').then(mod => mod.DeviceCard), {
+  ssr: false,
+  loading: () => <div className="h-[200px] rounded-xl border bg-gray-50 p-4 animate-pulse" />
+})
+
+const DeviceList = dynamic(() => import('../devices').then(mod => mod.DeviceList), {
+  ssr: false,
+  loading: () => <div className="h-[400px] rounded-xl border bg-gray-50 p-4 animate-pulse" />
+})
+
+export { Stock, Purchase, Stocks, Events, DeviceCard, DeviceList }
