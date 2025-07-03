@@ -21,6 +21,7 @@ export interface ChatPanelProps {
   setInput: (value: string) => void
   isAtBottom: boolean
   scrollToBottom: () => void
+  csvAnalysis?: string
 }
 
 export function ChatPanel({
@@ -29,23 +30,24 @@ export function ChatPanel({
   input,
   setInput,
   isAtBottom,
-  scrollToBottom
+  scrollToBottom,
+  csvAnalysis
 }: ChatPanelProps) {
   const [aiState] = useAIState()
   const [messages, setMessages] = useUIState<typeof AI>()
-  const { submitUserMessage } = useActions()
+  const { submitUserMessage, submitUserMessageWithCSV } = useActions()
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
 
   const exampleMessages = [
     {
-      heading: 'List flights flying from',
-      subheading: 'San Francisco to Rome today',
-      message: `List flights flying from San Francisco to Rome today`
+      heading: 'What is going on',
+      subheading: 'with my meters and devices?',
+      message: `What is going on with my meters and devices?`
     },
     {
-      heading: 'What is the status',
-      subheading: 'of flight BA142?',
-      message: 'What is the status of flight BA142?'
+      heading: 'How to fix',
+      subheading: 'these offline routers?',
+      message: 'How to fix these offline routers?'
     }
   ]
 
@@ -76,9 +78,9 @@ export function ChatPanel({
                   ])
 
                   try {
-                    const responseMessage = await submitUserMessage(
-                      example.message
-                    )
+                    const responseMessage = csvAnalysis 
+                      ? await submitUserMessageWithCSV(example.message, csvAnalysis)
+                      : await submitUserMessage(example.message)
 
                     setMessages(currentMessages => [
                       ...currentMessages,
@@ -132,7 +134,7 @@ export function ChatPanel({
         ) : null}
 
         <div className="grid gap-4 sm:pb-4">
-          <PromptForm input={input} setInput={setInput} />
+          <PromptForm input={input} setInput={setInput} csvAnalysis={csvAnalysis} />
           <FooterText className="hidden sm:block" />
         </div>
       </div>

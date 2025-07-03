@@ -5,75 +5,39 @@ import {
   getMutableAIState,
   createStreamableValue
 } from 'ai/rsc'
-import { BotCard } from '@/components/stocks'
 import { nanoid, sleep } from '@/lib/utils'
 import { CheckIcon, SpinnerIcon } from '@/components/ui/icons'
-import { Video } from '@/components/media/video'
 import { rateLimit } from './ratelimit'
 import * as prompts from './prompts'
 import AIService from './service'
 import type { AIProvider } from './types'
 
-export async function describeImage(imageBase64: string) {
+
+export async function submitUserMessageWithCSV(content: string, csvAnalysis?: string) {
   'use server'
 
   await rateLimit()
 
-  const service: AIService = new AIService(getMutableAIState<AIProvider>())
+  const aiState = getMutableAIState<AIProvider>()
+  const service: AIService = new AIService(aiState)
 
-  service.streams.ui.update(
-    <BotCard>
-      <Video isLoading />
-    </BotCard>
-  )
-  ;(async () => {
-    try {
-      // attachment as video for demo purposes,
-      // add your implementation here to support
-      // video as input for prompts.
-      if (imageBase64 === '') {
-        throw new Error(`implement video`)
-      } else {
-        const [header, imageData] = imageBase64.split(',')
+  service.appendMessage({
+    role: 'user',
+    content,
+    id: nanoid()
+  })
 
-        const result = await service.initiateStreamText(
-          prompts.describeImage(
-            imageData,
-            header.replace('data:', '').split(';')[0]
-          )
-        )
+  // Store CSV analysis in AI state for persistence across messages
+  if (csvAnalysis) {
+    aiState.update({
+      ...aiState.get(),
+      csvAnalysis
+    })
+  }
 
-        await service.handleTextStream(result, content => {
-          if (!content) {
-            return
-          }
-
-          service.appendMessage({
-            role: 'user',
-            content: 'Describe the attached image.'
-          })
-
-          service.appendMessage({
-            role: 'assistant',
-            content
-          })
-        })
-      }
-
-      service.streams.ui.update(
-        <BotCard>
-          <Video />
-        </BotCard>
-      )
-    } catch (e) {
-      console.error(e)
-
-      service.close(e as Error)
-      return
-    }
-
-    service.close()
-  })()
+  // Use prompt with CSV analysis - either from parameter or from AI state
+  const currentAnalysis = csvAnalysis || aiState.get().csvAnalysis
+  service.processAIState(prompts.ionWaterSupport(currentAnalysis))
 
   return {
     id: nanoid(),
@@ -88,15 +52,43 @@ export async function submitUserMessage(content: string) {
 
   await rateLimit()
 
-  const service: AIService = new AIService(getMutableAIState<AIProvider>())
+  const aiState = getMutableAIState<AIProvider>()
+  const service: AIService = new AIService(aiState)
 
   service.appendMessage({
     role: 'user',
-    content
+    content,
+    id: nanoid()
   })
 
-  // Intentionally not awaiting this:
-  service.processAIState(prompts.shoppingAssistant)
+  // Use CSV analysis from AI state if available
+  const csvAnalysis = aiState.get().csvAnalysis
+  service.processAIState(prompts.ionWaterSupport(csvAnalysis))
+
+  return {
+    id: nanoid(),
+    attachments: service.streams.ui.value,
+    spinner: service.streams.spinner.value,
+    display: service.streams.message.value
+  }
+}
+
+export async function getInitialDeviceAnalysis() {
+  'use server'
+
+  await rateLimit()
+
+  const service: AIService = new AIService(getMutableAIState<AIProvider>())
+
+  // Add initial analysis message
+  service.appendMessage({
+    role: 'user',
+    content: 'Please provide an initial device status summary and analysis of our current connectivity situation.',
+    id: nanoid()
+  })
+
+  // Process the AI state with ION Water support context
+  service.processAIState(prompts.ionWaterSupport())
 
   return {
     id: nanoid(),
@@ -138,6 +130,17 @@ export async function requestCode() {
     status: 'requires_code',
     display: ui.value
   }
+}
+
+export async function setCSVAnalysis(csvAnalysis: string) {
+  'use server'
+
+  const aiState = getMutableAIState<AIProvider>()
+  
+  aiState.update({
+    ...aiState.get(),
+    csvAnalysis
+  })
 }
 
 export async function validateCode() {

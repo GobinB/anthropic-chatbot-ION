@@ -12,11 +12,11 @@ import { Toaster } from '@/components/ui/sonner'
 export const metadata = {
   metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL!),
   title: {
-    default: 'Next.js Anthropic Chatbot',
-    template: `%s - Next.js Anthropic Chatbot`
+    default: 'ION Water Support Assistant',
+    template: `%s - ION Water Support Assistant`
   },
   description:
-    'Build your own generative UI chatbot using the Vercel AI SDK and Anthropic Claude',
+    'ION Water technical support assistant for water meter connectivity troubleshooting and device management',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon-16x16.png',

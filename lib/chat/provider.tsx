@@ -7,15 +7,13 @@ import { saveChat } from '@/app/actions'
 import { UserMessage } from '@/components/stocks/message'
 import { Chat } from '../types'
 import { auth } from '@/auth'
-import { PurchaseTickets } from '@/components/flights/purchase-ticket'
 import * as actions from './actions'
-import * as tools from './tools'
 import type { AIState, UIState, AIProvider } from './types'
 
 export const AI = createAI<AIState, UIState, typeof actions>({
   actions,
   initialUIState: [],
-  initialAIState: { chatId: nanoid(), messages: [] },
+  initialAIState: { chatId: nanoid(), messages: [], csvAnalysis: undefined },
   onGetUIState: async () => {
     'use server'
 
@@ -68,19 +66,9 @@ export const getUIStateFromAIState = (aiState: Chat) => {
       id: `${aiState.chatId}-${index}`,
       display:
         message.role === 'assistant' ? (
-          tools[message.display?.name as string] !== undefined ? (
-            tools[message.display?.name as keyof typeof tools].UIFromAI(
-              message.display.props
-            )
-          ) : message.content === 'The purchase has completed successfully.' ? (
-            <BotCard>
-              <PurchaseTickets status="expired" />
-            </BotCard>
-          ) : (
-            <BotMessage content={message.content} />
-          )
+          <BotMessage content={message.content} />
         ) : message.role === 'user' ? (
-          <UserMessage showAvatar>{message.content}</UserMessage>
+          <UserMessage>{message.content}</UserMessage>
         ) : (
           <BotMessage content={message.content} />
         )

@@ -8,26 +8,23 @@ import { useActions, useUIState } from 'ai/rsc'
 import { UserMessage } from './stocks/message'
 import { type AIProvider } from '@/lib/chat/types'
 import { Button } from '@/components/ui/button'
-import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
+import { IconArrowElbow } from '@/components/ui/icons'
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { toast } from 'sonner'
 
 export function PromptForm({
   input,
-  setInput
+  setInput,
+  csvAnalysis
 }: {
   input: string
   setInput: (value: string) => void
+  csvAnalysis?: string
 }) {
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const { submitUserMessage, describeImage } = useActions()
+  const { submitUserMessage, submitUserMessageWithCSV } = useActions()
   const [_, setMessages] = useUIState<AIProvider>()
 
   React.useEffect(() => {
@@ -36,7 +33,6 @@ export function PromptForm({
     }
   }, [])
 
-  const fileRef = React.useRef<HTMLInputElement>(null)
 
   return (
     <form
@@ -54,7 +50,7 @@ export function PromptForm({
         if (!value) return
 
         // Optimistically add user message UI
-        setMessages(currentMessages => [
+        setMessages((currentMessages: any) => [
           ...currentMessages,
           {
             id: nanoid(),
@@ -63,9 +59,11 @@ export function PromptForm({
         ])
 
         try {
-          // Submit and get response message
-          const responseMessage = await submitUserMessage(value)
-          setMessages(currentMessages => [...currentMessages, responseMessage])
+          // Submit and get response message - use CSV-aware action if CSV data is available
+          const responseMessage = csvAnalysis 
+            ? await submitUserMessageWithCSV(value, csvAnalysis)
+            : await submitUserMessage(value)
+          setMessages((currentMessages: any) => [...currentMessages, responseMessage])
         } catch {
           toast(
             <div className="text-red-600">
@@ -75,57 +73,7 @@ export function PromptForm({
         }
       }}
     >
-      <input
-        type="file"
-        className="hidden"
-        id="file"
-        ref={fileRef}
-        onChange={async event => {
-          if (!event.target.files) {
-            toast.error('No file selected')
-            return
-          }
-
-          const file = event.target.files[0]
-
-          if (file.type.startsWith('video/')) {
-            const responseMessage = await describeImage('')
-            setMessages(currentMessages => [
-              ...currentMessages,
-              responseMessage
-            ])
-          } else {
-            const reader = new FileReader()
-            reader.readAsDataURL(file)
-
-            reader.onloadend = async () => {
-              const base64String = reader.result
-              const responseMessage = await describeImage(base64String)
-              setMessages(currentMessages => [
-                ...currentMessages,
-                responseMessage
-              ])
-            }
-          }
-        }}
-      />
-      <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-zinc-100 px-12 sm:rounded-full sm:px-12">
-        {/* <Tooltip>
-          <TooltipTrigger asChild> */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute left-4 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-          onClick={() => {
-            fileRef.current?.click()
-          }}
-        >
-          <IconPlus />
-          <span className="sr-only">New Chat</span>
-        </Button>
-        {/* </TooltipTrigger>
-          <TooltipContent>Add Attachments</TooltipContent>
-        </Tooltip> */}
+      <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-zinc-100 sm:rounded-full sm:px-4">{/* File upload removed - CSV upload is handled in the main interface */}
         <Textarea
           ref={inputRef}
           tabIndex={0}
@@ -142,20 +90,15 @@ export function PromptForm({
           onChange={e => setInput(e.target.value)}
         />
         <div className="absolute right-4 top-[13px] sm:right-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="submit"
-                size="icon"
-                disabled={input === ''}
-                className="bg-transparent shadow-none text-zinc-950 rounded-full hover:bg-zinc-200"
-              >
-                <IconArrowElbow />
-                <span className="sr-only">Send message</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Send message</TooltipContent>
-          </Tooltip>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={input === ''}
+            className="bg-transparent shadow-none text-zinc-950 rounded-full hover:bg-zinc-200"
+          >
+            <IconArrowElbow />
+            <span className="sr-only">Send message</span>
+          </Button>
         </div>
       </div>
     </form>
