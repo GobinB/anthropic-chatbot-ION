@@ -11,9 +11,9 @@ import {
   PrepareHistory
 } from './types'
 import { createStreams, closeStreams, appendMessageToAIState } from './utils'
-import * as tools from './tools'
+import { nanoid } from '@/lib/utils'
 
-const model = anthropic('claude-3-haiku-20240307')
+const model = anthropic('claude-sonnet-4-20250514')
 
 const processAIState = async (
   aiState: MutableAIState<AIState>,
@@ -26,7 +26,7 @@ const processAIState = async (
   } catch (error) {
     console.error('Error in LLM request:', error)
 
-    if (error.name === `AI_InvalidToolArgumentsError`) {
+    if ((error as any).name === `AI_InvalidToolArgumentsError`) {
       console.log(`Retrying...`)
 
       try {
@@ -44,24 +44,24 @@ const processAIState = async (
         const result = await initiateStreamText(
           aiState,
           prepareHistory,
-          error as Error
+          error as any
         )
         await handleTextStream(aiState, streams, result)
       } catch (retryError) {
         console.error('Error in RETRY attempt:', retryError)
         closeStreams(streams, retryError as Error)
-        aiState.done()
+        aiState.done(aiState.get())
         return
       }
     } else {
       closeStreams(streams, error as Error)
-      aiState.done()
+      aiState.done(aiState.get())
       return
     }
   }
 
   closeStreams(streams)
-  aiState.done()
+  aiState.done(aiState.get())
 }
 
 async function initiateStreamText(
@@ -77,23 +77,20 @@ async function initiateStreamText(
   )
 
   if (previousError) {
-    if (previousError.toolName) {
+    if ((previousError as any).toolName) {
       history.push({
         role: 'assistant',
-        content: `Call '${previousError.toolName}' with arguments: ${previousError.toolArgs || {}}`
+        content: `Call '${(previousError as any).toolName}' with arguments: ${(previousError as any).toolArgs || {}}`
       })
     }
 
-    history.push({ role: 'user', content: previousError.message })
+    history.push({ role: 'user', content: (previousError as any).message })
     history.push({ role: 'user', content: 'Do not apologize for errors' })
   }
 
   return await streamText({
     model,
     temperature: 0,
-    tools: Object.fromEntries(
-      Object.entries(tools).map(([k, v]) => [k, v.definition])
-    ),
     messages: [...history]
   })
 }
@@ -112,6 +109,7 @@ async function handleTextStream(
       }
 
       appendMessageToAIState(aiState, {
+        id: nanoid(),
         role: 'assistant',
         content
       })
@@ -129,15 +127,6 @@ async function handleTextStream(
         streams.message.update(<BotMessage content={textContent} />)
         break
 
-      case 'tool-call':
-        const { toolName, args } = delta
-
-        if (tools[toolName] === undefined) {
-          throw new Error(`No tool '${toolName}' found.`)
-        }
-
-        tools[toolName].call(args, aiState, streams.ui)
-        break
 
       case 'finish':
         console.log(`Finished as`, JSON.stringify(delta))
@@ -158,7 +147,7 @@ export default class AIService {
 
   close = (error?: Error) => {
     closeStreams(this.streams, error)
-    this.aiState.done()
+    this.aiState.done(this.aiState.get())
   }
 
   appendMessage = (newMessage: AIStateMessage) =>

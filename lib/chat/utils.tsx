@@ -40,8 +40,8 @@ export const appendMessageToAIState = (
     messages: [
       ...aiState.get().messages,
       {
-        id: nanoid(),
-        ...newMessage
+        ...newMessage,
+        id: newMessage.id || nanoid()
       }
     ]
   })

@@ -3,16 +3,15 @@
 import { ChatList } from '@/components/chat-list'
 import { ChatPanel } from '@/components/chat-panel'
 import { EmptyScreen } from '@/components/empty-screen'
-import { ListFlights } from '@/components/flights/list-flights'
-import { ListHotels } from '@/components/hotels/list-hotels'
+import { CSVUploader, DeviceData } from '@/components/csv-uploader'
 import { Message } from '@/lib/chat/types'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { useScrollAnchor } from '@/lib/hooks/use-scroll-anchor'
 import { Session } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { useAIState, useUIState } from 'ai/rsc'
+import { useAIState, useUIState, useActions } from 'ai/rsc'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
 export interface ChatProps extends React.ComponentProps<'div'> {
@@ -27,8 +26,24 @@ export function Chat({ id, className, session }: ChatProps) {
   const [input, setInput] = useState('')
   const [messages] = useUIState()
   const [aiState] = useAIState()
+  const { setCSVAnalysis } = useActions()
 
   const [_, setNewChatId] = useLocalStorage('newChatId', id)
+  const [csvData, setCsvData] = useState<DeviceData[]>([])
+  const [csvAnalysis, setCsvAnalysis] = useState<string>('')
+  const [csvFileName, setCsvFileName] = useState<string>('')
+
+  const handleDataLoad = useCallback(async (data: DeviceData[], summary: string) => {
+    setCsvData(data)
+    setCsvAnalysis(summary)
+    setCsvFileName('uploaded-data.csv')
+
+    // Store CSV analysis in AI state for persistence
+    await setCSVAnalysis(summary)
+
+    // Show a welcome message with the data analysis
+    toast.success(`CSV loaded: ${data.length} devices analyzed`)
+  }, [setCSVAnalysis])
 
   useEffect(() => {
     if (session?.user) {
@@ -61,7 +76,16 @@ export function Chat({ id, className, session }: ChatProps) {
         {messages.length ? (
           <ChatList messages={messages} isShared={false} session={session} />
         ) : (
-          <EmptyScreen />
+          <div className="space-y-6">
+            <EmptyScreen />
+            <div className="mx-auto max-w-2xl px-4">
+              <CSVUploader
+                onDataLoad={handleDataLoad}
+                currentFileName={csvFileName}
+                deviceCount={csvData.length}
+              />
+            </div>
+          </div>
         )}
         <div className="h-px w-full" ref={visibilityRef} />
       </div>
@@ -71,6 +95,7 @@ export function Chat({ id, className, session }: ChatProps) {
         setInput={setInput}
         isAtBottom={isAtBottom}
         scrollToBottom={scrollToBottom}
+        csvAnalysis={csvAnalysis}
       />
     </div>
   )

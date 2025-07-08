@@ -5,7 +5,7 @@ import { auth } from '@/auth'
 import { Session } from '@/lib/types'
 
 export const metadata = {
-  title: 'Next.js AI Chatbot'
+  title: 'ION Water Support Assistant'
 }
 
 export default async function IndexPage() {
@@ -13,7 +13,7 @@ export default async function IndexPage() {
   const session = (await auth()) as Session
 
   return (
-    <AI initialAIState={{ chatId: id, interactions: [], messages: [] }}>
+    <AI initialAIState={{ chatId: id, interactions: [], messages: [], csvAnalysis: undefined }}>
       <Chat id={id} session={session} />
     </AI>
   )

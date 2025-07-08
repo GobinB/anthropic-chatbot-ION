@@ -1,9 +1,10 @@
 import { AI } from './actions'
+import { ValueOrUpdater, CoreMessage } from 'ai/rsc'
 
 export type Message = {
   role: 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool'
   content: string
-  id?: string
+  id: string
   name?: string
   display?: {
     name: string
@@ -15,6 +16,7 @@ export type AIState = {
   chatId: string
   interactions?: string[]
   messages: Message[]
+  csvAnalysis?: string
 }
 
 export type UIState = {

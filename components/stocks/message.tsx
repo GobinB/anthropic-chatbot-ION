@@ -11,6 +11,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { StreamableValue } from 'ai/rsc'
 import { useStreamableText } from '@/lib/hooks/use-streamable-text'
+import { DeviceCard } from '../devices/device-card'
 
 // Different types of message bubbles.
 
@@ -61,6 +62,34 @@ export function BotMessage({
               }
 
               const match = /language-(\w+)/.exec(className || '')
+
+              // Handle device cards
+              if (match && match[1] === 'device-card') {
+                try {
+                  const deviceData = JSON.parse(String(children).replace(/\n$/, ''))
+
+                  const getPriority = (deviceType: string, status: string) => {
+                    if (deviceType === 'gateway') return 'critical'
+                    if (deviceType === 'router' && status.includes('coordinator')) return 'critical'
+                    if (deviceType === 'router' || deviceType === 'coordinator') return 'high'
+                    return 'medium'
+                  }
+
+                  return (
+                    <div className="my-4">
+                      <DeviceCard
+                        device={deviceData}
+                        priority={getPriority(deviceData.device_type, deviceData.status)}
+                      />
+                    </div>
+                  )
+                } catch (error) {
+                  if (process.env.NODE_ENV === 'development') {
+                    console.error('Error parsing device card data:', error)
+                  }
+                  return <div className="text-red-500">Error displaying device card</div>
+                }
+              }
 
               if (inline) {
                 return (

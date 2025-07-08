@@ -1,7 +1,1 @@
-export * as showFlights from './showFlights'
-export * as listDestinations from './listDestinations'
-export * as showSeatPicker from './showSeatPicker'
-export * as showHotels from './showHotels'
-export * as checkoutBooking from './checkoutBooking'
-export * as showBoardingPass from './showBoardingPass'
-export * as showFlightStatus from './showFlightStatus'
+// No tools - using natural language responses
